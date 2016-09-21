@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="keywords" content="JavaScript, WebRTC" />
+<meta name="description" content="WebRTC codelab" />
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+<title>Web CamChatting</title>
+<style>
+</style>
+    <script src='js/lib/adapter.js/'></script> <!--兼容不同的设备和浏览器-->
+</head>
+
+<body>
+
+<video id="localVideo" autoplay muted></video>
+<video id="remoteVideo" autoplay muted></video> <!--显示两个画面，一个是发送的一个是接收的，在一个页面内 -->
+
+<div>
+    <button id="startButton">OpenCamera</button>
+    <button id="callButton">Connect</button>
+    <button id="hangupButton">Stop</button> <!-- 增加开始，发送，终止的控制按键 -->
+</div>
+
+
+<script>
+var localStream, localPeerConnection, remotePeerConnection;
+
+var localVideo = document.getElementById("localVideo");
+var remoteVideo = document.getElementById("remoteVideo");
+
+var startButton = document.getElementById("startButton");
+var callButton = document.getElementById("callButton");
+var hangupButton = document.getElementById("hangupButton");
+
+startButton.disabled = false; //打开网页自动开启摄像头
+callButton.disabled = true; // 默认不开启传输
+hangupButton.disabled = true; //默认不挂断 当たり前だ！
+startButton.onclick = start;
+callButton.onclick = call;
+hangupButton.onclick = hangup;
+
+function trace(text){
+    console.log((performance.now() / 1000).toFixed(3)+ ": "+text); //以下所有涉及到trace函数的代码全部都是用来记录诊断信息的
+}
+function gotStream(stream){
+    trace("Received local stream");
+    localVideo.src = URL.createObjectURL(stream);
+    localStream = stream;
+    callButton.disabled = false;
+}
+function start() {
+    trace("Requesting Local Video");
+    startButton.disabled = true; //打开开始按键
+    getUserMedia({audio: true, video: true}, gotStream, function (error) {
+        trace("getUserMedia Error: ", error);
+    });
+}
+function call(){   //問題がある
+    callButton.disabled = true;
+    hangupButton.disabled = false;
+    trace("Starting Call");
+    if (localStream.getVideoTracks().length > 0) {
+        trace('Using video device ' + localStream.getVideoTracks()[0].label);
+    }
+    if (localStream.getAudioTracks().length > 0) {
+        trace('Using audio device ' + localStream.getAudioTracks()[0].label);
+    }
+    var servers = null; //这这里填入服务器名！
+
+    localPeerConnection = new RTCPeerConnection(servers);
+    trace("Create local peer connection object localPeerConnection");
+    localPeerConnection.onicecandidate = gotLocalIceCandidate;
+
+    remotePeerConnection = new RTCPeerConnection(servers);
+    trace("Create remote peer connection object remotePeerConnection");
+    remotePeerConnection.onicecandidate = gotRemoteIceCandidate; //TO DO
+    remotePeerConnection.onaddstream = gotRemoteStream;
+
+    localPeerConnection.addStream(localStream); //是addStream 不是addstream!!!!
+    trace("Added localStream to localPeerConnection");
+    localPeerConnection.createOffer(gotLocalDescription,handleError); //TO DO
+}
+function gotLocalDescription(description){
+    localPeerConnection.setLocalDescription(description);
+    trace("Offer from localPeerConnection: \n" + description.sdp);
+    remotePeerConnection.setRemoteDescription(description);
+    remotePeerConnection.createAnswer(gotRemoteDescription,handleError); //TO DO
+}
+function gotRemoteDescription(description){
+    remotePeerConnection.setLocalDescription(description);
+    trace("Answer from remotePeerConnection: \n" + description.sdp);
+    localPeerConnection.setRemoteDescription(description);
+}
+function hangup(){
+    trace("Ending Call");
+    localPeerConnection.close();
+    remotePeerConnection.close();
+    localPeerConnection = null;
+    remotePeerConnection = null;
+    hangupButton.disabled = true;
+    callButton.disabled = false;
+}
+function gotRemoteStream(event){
+    remoteVideo.src = URL.createObjectURL(event.stream);
+    trace("Received remote stream");
+}
+function gotLocalIceCandidate(event) {
+    if (event.candidate) {
+        remotePeerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        trace("Local ICE candidate: \n" + event.candidate.candidate);
+
+    }
+}
+function gotRemoteIceCandidate(event) {
+    if (event.candidate) {
+        localPeerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        trace("Remote ICE candidate: \n " + event.candidate.candidate);
+    }
+}
+function handleError(){}
+</script>
+
+</body>
+
+</html>
