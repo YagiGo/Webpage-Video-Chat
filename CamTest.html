@@ -1,45 +1,33 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="zh-CN">
 <head>
-<meta name="keywords" content="JavaScript, WebRTC" />
-<meta name="description" content="WebRTC codelab" />
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
-<title>Web CamChatting</title>
-<style>
-</style>
-    <script src='js/lib/adapter.js/'></script> <!--兼容不同的设备和浏览器-->
+    <meta charset="UTF-8">
+    <title>摄像头测试</title>
 </head>
 <body>
+	<p1>Web Cam Test </p1>
+    <video id="video" autoplay></video>
+</body>
 
-<video />
 
+<script type="text/javascript">
+    var getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
 
-<script>
-var constraints = {video: true};
-/* 确定要获得的信号，这里只采集视频信号，想同时采集音频信号
-var constrains = {video:true,audio:true> */
-function successCallback(stream)
-{
-  window.stream = stream; //stream available
-  var video = document.querySelector("video");
-        /* Window 代表浏览器中一个打开的窗口：
-        对象属性
-　　     window //窗口自身
-　　     window.self //引用本窗户window=window.self
-　　     window.name //为窗口命名
-　　     window.defaultStatus //设定窗户状态栏信息
-　　     window.location //URL地址，配备布置这个属性可以打开新的页面 */
-    video.src = window.URL.createObjectURL(stream);
-  video.play();
-
-}
-function errorCallback(error) {
-        console.log("getUserMedia error: ",error);
-
-}
-getUserMedia(constraints,successCallback,errorCallback);
+    getUserMedia.call(navigator, {
+        video: true,
+        audio: true
+    }, function(localMediaStream) {
+        var video = document.getElementById('video');
+        video.src = window.URL.createObjectURL(localMediaStream);
+        video.onloadedmetadata = function(e) {
+            console.log("Label: " + localMediaStream.label);
+            console.log("AudioTracks" , localMediaStream.getAudioTracks());
+            console.log("VideoTracks" , localMediaStream.getVideoTracks());
+        };
+    }, function(e) {
+        console.log('Reeeejected!', e);
+    });
 </script>
 
-</body>
 
 </html>

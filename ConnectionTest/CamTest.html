@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="keywords" content="JavaScript, WebRTC" />
+<meta name="description" content="WebRTC codelab" />
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+<title>Web CamChatting</title>
+<style>
+</style>
+    <script src='js/lib/adapter.js/'></script> <!--兼容不同的设备和浏览器-->
+</head>
+<body>
+
+<video />
+
+
+<script>
+var constraints = {video: true};
+/* 确定要获得的信号，这里只采集视频信号，想同时采集音频信号
+var constrains = {video:true,audio:true> */
+function successCallback(stream)
+{
+  window.stream = stream; //stream available
+  var video = document.querySelector("video");
+        /* Window 代表浏览器中一个打开的窗口：
+        对象属性
+　　     window //窗口自身
+　　     window.self //引用本窗户window=window.self
+　　     window.name //为窗口命名
+　　     window.defaultStatus //设定窗户状态栏信息
+　　     window.location //URL地址，配备布置这个属性可以打开新的页面 */
+    video.src = window.URL.createObjectURL(stream);
+  video.play();
+
+}
+function errorCallback(error) {
+        console.log("getUserMedia error: ",error);
+
+}
+getUserMedia(constraints,successCallback,errorCallback);
+</script>
+
+</body>
+
+</html>
